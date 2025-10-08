@@ -7,11 +7,7 @@ import pandas as pd
 from helpers import yymmdd
 from azure_storage import save_file_to_blob
 
-
-
-
 PATH_TO_SAVE = "./dados_b3"
-
 
 def build_url_download(date_to_download):
     return f"https://www.b3.com.br/pesquisapregao/download?filelist=SPRE{date_to_download}.zip"
@@ -19,13 +15,13 @@ def build_url_download(date_to_download):
 def try_http_download(url):
     session = requests.Session()
     try:
-        print(f"[INFO] Tentando {url}")
+        print(f"Tentando {url}")
         resp = session.get(url, timeout=30)
         if (resp.ok) and resp.content and len(resp.content) > 200:
             if (resp.content[:2] == b"PK"):
                 return resp.content, os.path.basename(url)
     except requests.RequestException:
-        print(f"[ERROR] Falha ao acessar a {url}")
+        print(f"Falha ao acessar a {url}")
         pass
 
     return None, None
@@ -38,19 +34,19 @@ def achar_zip_pregao_recente(max_days):
         zip_bytes, zip_name = try_http_download(url)
         if zip_bytes:
             if days_back > 0:
-                print(f"[INFO] Arquivo encontrado para {dt_str} (há {days_back} dias)")
+                print(f"Arquivo encontrado para {dt_str} (há {days_back} dias)")
             return dt_str, zip_bytes, zip_name
     return None, None, None
 
 def run():
-    print("[INFO] Iniciando a extração dos dados da B3...")
-    MAX_DAYS = 7
+    print("Iniciando a extração dos dados da B3...")
+    MAX_DAYS = 5
     dt, zip_bytes, zip_name = achar_zip_pregao_recente(MAX_DAYS)
 
     if not zip_bytes:
         raise RuntimeError(f"Não foi possível baixar o arquivo de cotações nos últimos {MAX_DAYS} dias. Verifique conexão / site da B3.")
 
-    print(f"[OK] Baixado arquivo de cotaçoes: {zip_name}")
+    print(f"Baixado arquivo de cotações: {zip_name}")
 
     # 2) Salvar o Zip
     os.makedirs(PATH_TO_SAVE, exist_ok=True)
@@ -58,7 +54,7 @@ def run():
     with open(zip_path, "wb") as f:
         f.write(zip_bytes)
 
-    print(f"[OK] Zip salvo em {zip_path}")
+    print(f"Zip salvo em {zip_path}")
 
     # 3) Extrair os arquivos do zip
     first_extract_dir = os.path.join(PATH_TO_SAVE, f"pregao_{dt}")
@@ -72,7 +68,7 @@ def run():
     with zipfile.ZipFile(second_zip, "r") as zf:
         zf.extractall(second_extract_dir)
 
-    print(f"[OK] Arquivos extraidos do zip com sucesso")
+    print("Arquivos extraídos do zip com sucesso")
 
     # Subir o(s) XML(s) para o Azure Blob Storage
     arquivos = [f for f in os.listdir(f"{PATH_TO_SAVE}/ARQUIVOSPREGAO_SPRE{dt}") if f.endswith(".xml")]
@@ -81,7 +77,7 @@ def run():
     for arquivo in arquivos:
         save_file_to_blob(arquivo, f"{PATH_TO_SAVE}/ARQUIVOSPREGAO_SPRE{dt}/{arquivo}")
         last_xml_name = arquivo
-    print(f"[OK] Arquivo(s) XML enviado(s) para o Azure Blob Storage com sucesso")
+    print("Arquivo(s) XML enviado(s) para o Azure Blob Storage com sucesso")
 
     # Criar um DataFrame com os dados extraídos
     extracted_data = []
@@ -91,15 +87,15 @@ def run():
 
     # Grava um ponteiro com o nome do último XML enviado
     if last_xml_name:
-        POINTER_LOCAL = os.path.join(PATH_TO_SAVE, "last_XML.txt")
+        POINTER_LOCAL = os.path.join(PATH_TO_SAVE, "last_data.txt")
         with open(POINTER_LOCAL, "w", encoding="utf-8") as f:
             f.write(last_xml_name.strip())
-        save_file_to_blob("last_XML.txt", POINTER_LOCAL)
+        save_file_to_blob("last_data.txt", POINTER_LOCAL)
 
     # Lógica para transformar dados do último arquivo XML
     if last_xml_name:
         last_xml_path = os.path.join(PATH_TO_SAVE, f"ARQUIVOSPREGAO_SPRE{dt}", last_xml_name)
-        print(f"[INFO] Transformando dados do último arquivo XML: {last_xml_path}")
+        print(f"Transformando dados do último arquivo XML: {last_xml_path}")
 
 if __name__ == "__main__":
     run()
