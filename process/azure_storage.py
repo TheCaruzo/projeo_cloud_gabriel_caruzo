@@ -13,6 +13,18 @@ def get_blob_service_client():
     """Returns a BlobServiceClient using the connection string."""
     return BlobServiceClient.from_connection_string(AZURE_BLOB_CONNECTION)
 
+
+def list_blobs(prefix: str = None):
+    """List blob names in the configured container. Optionally filter by prefix."""
+    service_client = get_blob_service_client()
+    container_client = service_client.get_container_client(CONTAINER)
+    try:
+        blobs = container_client.list_blobs(name_starts_with=prefix)
+        return [b.name for b in blobs]
+    except Exception as e:
+        logging.error(f"Failed to list blobs in container '{CONTAINER}': {e}", exc_info=True)
+        return []
+
 def ensure_container_exists(service_client: BlobServiceClient, container_name: str):
     """Creates a blob container if it does not already exist."""
     try:

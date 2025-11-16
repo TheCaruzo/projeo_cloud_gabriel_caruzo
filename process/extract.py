@@ -4,8 +4,8 @@ import os
 import zipfile
 import pandas as pd
 
-from helpers import yymmdd
-from azure_storage import save_file_to_blob
+from .helpers import yymmdd
+from .azure_storage import save_file_to_blob
 
 PATH_TO_SAVE = "./dados_b3"
 
