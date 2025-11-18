@@ -40,7 +40,7 @@ def achar_zip_pregao_recente(max_days):
 
 def run():
     print("Iniciando a extração dos dados da B3...")
-    MAX_DAYS = 5
+    MAX_DAYS = 7
     dt, zip_bytes, zip_name = achar_zip_pregao_recente(MAX_DAYS)
 
     if not zip_bytes:

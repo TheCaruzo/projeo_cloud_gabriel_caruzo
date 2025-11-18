@@ -5,8 +5,8 @@ from io import BytesIO
 from typing import List, Dict
 from datetime import datetime
 from process.helpers import yymmdd
-from process.queries import insert_pregao, insert_pregao_bulk, select_all_pregao  # Importa as funções de manipulação do banco de dados
-import os
+from process.queries import insert_pregao, insert_pregao_bulk, select_all_pregao  
+from pathlib import Path
 
 def to_decimal(value):
     """Converte um valor para Decimal, retornando None em caso de erro."""
@@ -84,7 +84,12 @@ def transform():
     """Processa o arquivo XML, salva os dados extraídos em um arquivo Excel e insere no banco de dados."""
     # Ler o nome do arquivo salvo pelo extract.py
     # compute repo root (used both for searching and for diagnostic output)
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Use pathlib and handle cases where __file__ may not be defined (interactive runs)
+    if "__file__" in globals():
+        script_dir = str(Path(__file__).resolve().parent)
+    else:
+        # fallback to current working directory
+        script_dir = os.getcwd()
     repo_root = os.path.abspath(os.path.join(script_dir, os.pardir))
 
     def find_last_data_file() -> str:

@@ -1,0 +1,24 @@
+
+& .\.venv\Scripts\Activate.ps1; Set-Location 'C:\Users\Dell\Desktop\projeo_cloud_gabriel_caruzo'; $Env:USE_LOCAL_BLOBS = 'true'; $Env:LOCAL_BLOB_DIR = "$PWD\dados_b3"; & .\.venv\Scripts\python -m process.process_data
+
+# No novo terminal, ative a venv
+& C:\Users\Dell\Desktop\projeo_cloud_gabriel_caruzo\.venv\Scripts\Activate.ps1
+
+# Ir para a pasta do repo (se necessário)
+Set-Location 'C:\Users\Dell\Desktop\projeo_cloud_gabriel_caruzo'
+
+# Rodar backend
+& .\.venv\Scripts\python backend\app.py
+
+
+& .\.venv\Scripts\python backend\process_data.py
+
+
+# No novo terminal
+Set-Location 'C:\Users\Dell\Desktop\projeo_cloud_gabriel_caruzo\frontend'
+
+# Instalar dependências (somente na primeira vez)
+npm install
+
+# Iniciar dev server
+npm start

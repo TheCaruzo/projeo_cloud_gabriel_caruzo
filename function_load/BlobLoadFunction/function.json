@@ -1,0 +1,12 @@
+{
+  "scriptFile": "__init__.py",
+  "bindings": [
+    {
+      "name": "myblob",
+      "type": "blobTrigger",
+      "direction": "in",
+      "path": "arquivosb3/{name}",
+      "connection": "AZURESTORAGE_CONNECTION_STRING"
+    }
+  ]
+}
