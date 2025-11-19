@@ -1,4 +1,3 @@
-import mysql.connector
 from .db_connection import get_connection, get_sqlalchemy_engine
 
 import pandas as pd
@@ -14,19 +13,26 @@ def insert_pregao(ativo, data_pregao, abertura=None, fechamento=None, volume=Non
         cursor = connection.cursor()
         sql = """
             INSERT INTO Cotacoes (Ativo, DataPregao, Abertura, Fechamento, Volume)
-            VALUES (%s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?)
         """
         values = (ativo, data_pregao, abertura, fechamento, volume)
         cursor.execute(sql, values)
         connection.commit()
         print(f"Registro inserido com sucesso: {ativo}, {data_pregao}")
-    except mysql.connector.Error as err:
+    except Exception as err:
         print(f"[ERRO] Não foi possível inserir o registro: {err}")
     finally:
         try:
-            if connection and connection.is_connected():
-                cursor.close()
-                connection.close()
+            if 'cursor' in locals() and cursor is not None:
+                try:
+                    cursor.close()
+                except Exception:
+                    pass
+            if 'connection' in locals() and connection is not None:
+                try:
+                    connection.close()
+                except Exception:
+                    pass
         except Exception:
             pass
 
@@ -38,7 +44,7 @@ def insert_pregao_bulk(records, table_name="Cotacoes", chunksize: int = 1000):
     - The function will create an SQLAlchemy engine from environment vars via
       `db_connection.get_sqlalchemy_engine()`.
     """
-    # Normalize to DataFrame
+   
     if isinstance(records, pd.DataFrame):
         df = records.copy()
     else:
@@ -48,7 +54,7 @@ def insert_pregao_bulk(records, table_name="Cotacoes", chunksize: int = 1000):
         print("Nenhum registro para inserir.")
         return 0
 
-    # Reorder/select columns expected by the DB (Cotacoes schema)
+
     expected_cols = [
         "Ativo",
         "DataPregao",
@@ -56,14 +62,13 @@ def insert_pregao_bulk(records, table_name="Cotacoes", chunksize: int = 1000):
         "Fechamento",
         "Volume",
     ]
-    # Keep only columns that exist in df, in expected order
+  
     cols = [c for c in expected_cols if c in df.columns]
     if not cols:
         raise ValueError("DataFrame não contém colunas esperadas para inserção.")
 
     df = df[cols]
 
-    # Create SQLAlchemy engine
     try:
         engine = get_sqlalchemy_engine()
     except Exception as e:
@@ -74,12 +79,12 @@ def insert_pregao_bulk(records, table_name="Cotacoes", chunksize: int = 1000):
     inserted = 0
     try:
         with engine.begin() as conn:
-            # Insert in chunks and update progress
+        
             with tqdm(total=total, unit="rows") as pbar:
                 for start in range(0, total, chunksize):
                     end = start + chunksize
                     chunk = df.iloc[start:end]
-                    # to_sql with conn (SQLAlchemy connection) and if_exists='append'
+                   
                     chunk.to_sql(name=table_name, con=conn, if_exists="append", index=False)
                     inserted += len(chunk)
                     pbar.update(len(chunk))
