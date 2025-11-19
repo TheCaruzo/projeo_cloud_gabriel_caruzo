@@ -1,9 +1,10 @@
 {
   "IsEncrypted": false,
   "Values": {
-    "AzureWebJobsStorage": "<your-storage-connection-string>",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "AzureWebJobsSecretStorageType": "Files",
     "FUNCTIONS_WORKER_RUNTIME": "python",
-    "AZURE_STORAGE_CONNECTION_STRING": "<your-storage-connection-string>",
+    "AZURE_STORAGE_CONNECTION_STRING": "UseDevelopmentStorage=true",
     "BACKEND_INGEST_URL": "https://ap2cloud.azurewebsites.net/ingest"
   }
 }
