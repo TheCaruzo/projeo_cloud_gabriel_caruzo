@@ -1,4 +1,5 @@
 from process.azure_storage import get_file_from_blob
+import os
 from lxml import etree
 import pandas as pd
 from io import BytesIO

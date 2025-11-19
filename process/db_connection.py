@@ -1,21 +1,26 @@
-import os
 import pyodbc
 from sqlalchemy import create_engine
+from urllib.parse import quote_plus
+
+
+SERVER = "caruzo.database.windows.net"
+DATABASE = "AP2Cloud"
+USERNAME = "ap2"
+PASSWORD = "12345678G@"
+DRIVER = "ODBC Driver 18 for SQL Server"
+PORT = 1433
+
+
 
 def get_connection():
     """Conexão com Azure SQL via pyodbc."""
-    
-    server = os.getenv("DB_HOST", "caruzo.database.windows.net")
-    database = os.getenv("DB_NAME", "AP2Cloud")
-    username = os.getenv("DB_USER", "ap2")
-    password = os.getenv("DB_PASSWORD", "12345678G@")
 
     connection_string = (
-        f"Driver={{ODBC Driver 18 for SQL Server}};"
-        f"Server=tcp:{server},1433;"
-        f"Database={database};"
-        f"UID={username};"
-        f"PWD={password};"
+        f"Driver={{{DRIVER}}};"
+        f"Server={SERVER},{PORT};"
+        f"Database={DATABASE};"
+        f"UID={USERNAME};"
+        f"PWD={PASSWORD};"
         f"Encrypt=yes;"
         f"TrustServerCertificate=no;"
         f"Connection Timeout=30;"
@@ -23,7 +28,7 @@ def get_connection():
 
     try:
         conn = pyodbc.connect(connection_string)
-        print("Conectado ao Azure SQL!")
+        print("Conectado ao Azure SQL via pyodbc!")
         return conn
     except Exception as e:
         print(f"Erro ao conectar ao Azure SQL: {e}")
@@ -32,26 +37,35 @@ def get_connection():
 
 def get_sqlalchemy_connection_string():
     """Retorna string SQLAlchemy."""
-    
-    server = os.getenv("DB_HOST", "caruzo.database.windows.net")
-    database = os.getenv("DB_NAME", "AP2Cloud")
-    username = os.getenv("DB_USER", "ap2")
-    password = os.getenv("DB_PASSWORD", "12345678G@")
-
-    return (
-        f"mssql+pyodbc://{username}:{password}"
-        f"@{server}:1433/{database}"
-        f"?driver=ODBC+Driver+18+for+SQL+Server&encrypt=yes"
+    # Build a proper ODBC connection string and URL-encode it so that
+    # special characters in the password (e.g. @) don't break the URL.
+    odbc_str = (
+        f"DRIVER={{{DRIVER}}};"
+        f"SERVER={SERVER},{PORT};"
+        f"DATABASE={DATABASE};"
+        f"UID={USERNAME};"
+        f"PWD={PASSWORD};"
+        f"Encrypt=yes;"
+        f"TrustServerCertificate=no;"
     )
+    return quote_plus(odbc_str)
+
 
 
 def get_sqlalchemy_engine():
-    conn_str = get_sqlalchemy_connection_string()
-    engine = create_engine(conn_str)
+    # Use the ODBC connection string via the `odbc_connect` query param.
+    # `get_sqlalchemy_connection_string()` returns a URL-encoded odbc string.
+    quoted = get_sqlalchemy_connection_string()
+    engine = create_engine(f"mssql+pyodbc:///?odbc_connect={quoted}")
     return engine
+
 
 
 if __name__ == "__main__":
     conn = get_connection()
     if conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT TOP 1 name FROM sys.tables;")
+        result = cursor.fetchone()
+        print("Teste OK! Primeira tabela:", result)
         conn.close()
