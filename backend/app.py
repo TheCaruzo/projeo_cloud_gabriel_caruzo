@@ -16,7 +16,13 @@ from process.queries import select_all_pregao, insert_pregao_bulk
 
 
 app = Flask(__name__)
-CORS(app)
+
+front_origins = os.environ.get("FRONTEND_ORIGINS", "")
+if front_origins:
+    origins = [o.strip() for o in front_origins.split(",") if o.strip()]
+    CORS(app, origins=origins)
+else:
+    CORS(app)
 
 
 def row_to_dict(row):
