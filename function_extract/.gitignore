@@ -1,0 +1,6 @@
+__pycache__/
+.env
+.local.settings.json
+azurite_debug.log
+__azurite_db_blob__/
+.vscode/
