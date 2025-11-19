@@ -11,7 +11,7 @@ if repo_root not in sys.path:
     sys.path.insert(0, repo_root)
 
 # Now import the queries module from the `process` package/directory
-from process.queries import select_all_pregao
+from process.queries import select_all_pregao, insert_pregao_bulk
 
 
 
@@ -59,6 +59,24 @@ def list_assets():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/ingest", methods=["POST"])
+def ingest():
+    """Recebe uma lista JSON de registros e insere em bulk na tabela Cotacoes.
+
+    Payload esperado: JSON array de objetos com chaves: Ativo, DataPregao, Abertura, Fechamento, Volume
+    """
+    try:
+        payload = request.get_json()
+        if not payload:
+            return jsonify({"error": "payload vazio"}), 400
+
+        # insert_pregao_bulk aceita lista de dicts ou DataFrame
+        inserted = insert_pregao_bulk(payload, table_name="Cotacoes")
+        return jsonify({"inserted": inserted}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/", methods=["GET"])
 def root():
     """Simple root for health check and quick info."""
@@ -70,7 +88,6 @@ def root():
 
 
 if __name__ == "__main__":
-    # Diagnostic info to confirm which code is running
     try:
         import process.queries as _q
         queries_path = getattr(_q, '__file__', None)
