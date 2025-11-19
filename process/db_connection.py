@@ -1,65 +1,53 @@
 import os
-import mysql.connector
+import pyodbc
+from sqlalchemy import create_engine
 
 def get_connection():
-    """Connect using mysql.connector. Reads connection info from environment
-    variables with sensible defaults for local development.
+    """Conexão com Azure SQL via pyodbc."""
+    
+    server = os.getenv("DB_HOST", "caruzo.database.windows.net")
+    database = os.getenv("DB_NAME", "AP2Cloud")
+    username = os.getenv("DB_USER", "ap2")
+    password = os.getenv("DB_PASSWORD", "12345678G@")
 
-    Environment variables used:
-    - DB_HOST (default: 'localhost')
-    - DB_USER (default: 'root')
-    - DB_PASSWORD (default: '123456')
-    - DB_NAME (default: 'dados_b3')
-    - DB_PORT (default: 3306)
-    """
-    host = os.getenv("DB_HOST", "localhost")
-    user = os.getenv("DB_USER", "root")
-    password = os.getenv("DB_PASSWORD", "123456")
-    database = os.getenv("DB_NAME", "dados_b3")
-    port = int(os.getenv("DB_PORT", "3306"))
+    connection_string = (
+        f"Driver={{ODBC Driver 18 for SQL Server}};"
+        f"Server=tcp:{server},1433;"
+        f"Database={database};"
+        f"UID={username};"
+        f"PWD={password};"
+        f"Encrypt=yes;"
+        f"TrustServerCertificate=no;"
+        f"Connection Timeout=30;"
+    )
 
     try:
-        connection = mysql.connector.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=database,
-            port=port,
-        )
-        print(f"Conexão com o banco de dados '{database}' estabelecida ({user}@{host}:{port}).")
-        return connection
-    except mysql.connector.Error as e:
-        print(f"[ERRO] Não foi possível conectar ao banco de dados: {e}")
+        conn = pyodbc.connect(connection_string)
+        print("Conectado ao Azure SQL!")
+        return conn
+    except Exception as e:
+        print(f"Erro ao conectar ao Azure SQL: {e}")
         return None
 
 
-def get_sqlalchemy_connection_string(driver: str = "mysql+mysqlconnector") -> str:
-    """Return a SQLAlchemy connection string built from environment variables.
+def get_sqlalchemy_connection_string():
+    """Retorna string SQLAlchemy."""
+    
+    server = os.getenv("DB_HOST", "caruzo.database.windows.net")
+    database = os.getenv("DB_NAME", "AP2Cloud")
+    username = os.getenv("DB_USER", "ap2")
+    password = os.getenv("DB_PASSWORD", "12345678G@")
 
-    Example for MySQL: "mysql+mysqlconnector://user:password@host:port/dbname"
-    """
-    host = os.getenv("DB_HOST", "localhost")
-    user = os.getenv("DB_USER", "root")
-    password = os.getenv("DB_PASSWORD", "123456")
-    database = os.getenv("DB_NAME", "dados_b3")
-    port = os.getenv("DB_PORT", "3306")
-
-    # URL-encode password if necessary? For now assume no special chars.
-    return f"{driver}://{user}:{password}@{host}:{port}/{database}"
+    return (
+        f"mssql+pyodbc://{username}:{password}"
+        f"@{server}:1433/{database}"
+        f"?driver=ODBC+Driver+18+for+SQL+Server&encrypt=yes"
+    )
 
 
-def get_sqlalchemy_engine(**create_engine_kwargs):
-    """Create and return a SQLAlchemy engine using the connection string.
-
-    If SQLAlchemy is not installed, raises ImportError with guidance.
-    """
-    try:
-        from sqlalchemy import create_engine
-    except Exception as e:
-        raise ImportError("sqlalchemy is required for get_sqlalchemy_engine(). Install it with 'pip install sqlalchemy'.") from e
-
+def get_sqlalchemy_engine():
     conn_str = get_sqlalchemy_connection_string()
-    engine = create_engine(conn_str, **create_engine_kwargs)
+    engine = create_engine(conn_str)
     return engine
 
 
