@@ -1,24 +1,32 @@
+Rodar o process 
 
-& .\.venv\Scripts\Activate.ps1; Set-Location 'C:\Users\Dell\Desktop\projeo_cloud_gabriel_caruzo'; $Env:USE_LOCAL_BLOBS = 'true'; $Env:LOCAL_BLOB_DIR = "$PWD\dados_b3"; & .\.venv\Scripts\python -m process.process_data
-
-# No novo terminal, ative a venv
-& C:\Users\Dell\Desktop\projeo_cloud_gabriel_caruzo\.venv\Scripts\Activate.ps1
-
-# Ir para a pasta do repo (se necessário)
-Set-Location 'C:\Users\Dell\Desktop\projeo_cloud_gabriel_caruzo'
-
-# Rodar backend
-& .\.venv\Scripts\python backend\app.py
+cd C:\Users\Dell\Desktop\projeo_cloud_gabriel_caruzo
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r process/requirements.txt
+pip install -r backend/requirements.txt
 
 
-& .\.venv\Scripts\python backend\process_data.py
+
+# Example - change dt part (SPRE date) or file names if needed
+$env:USE_LOCAL_BLOBS = 'true'
+$env:LAST_DATA_FILE  = 'C:\Users\Dell\Desktop\projeo_cloud_gabriel_caruzo\function_extract\dados_b3\last_data.txt'
+$env:LOCAL_BLOB_DIR  = 'C:\Users\Dell\Desktop\projeo_cloud_gabriel_caruzo\function_extract\dados_b3\ARQUIVOSPREGAO_SPRE251118'
 
 
-# No novo terminal
-Set-Location 'C:\Users\Dell\Desktop\projeo_cloud_gabriel_caruzo\frontend'
+python -c "from process.process_data import transform; transform()"
 
-# Instalar dependências (somente na primeira vez)
-npm install
 
-# Iniciar dev server
-npm start
+Rodar o back end 
+
+cd C:\Users\Dell\Desktop\projeo_cloud_gabriel_caruzo\backend
+.\.venv\Scripts\Activate.ps1
+python app.py
+
+
+Rodar o front 
+
+cd C:\Users\Dell\Desktop\projeo_cloud_gabriel_caruzo\frontend; npm install; npm start
+
+
+
